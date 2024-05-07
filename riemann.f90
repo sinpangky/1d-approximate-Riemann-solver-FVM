@@ -1,6 +1,6 @@
 module riemann_parameter
   implicit none
-  integer, parameter :: NN = 104  ! number of cell
+  integer, parameter :: NN = 10004  ! number of cell
   real, parameter :: ep = 1.0E-5, PROT1 = 1.0E-4  ! zero-avoid
   real, parameter :: omg = 7.0/5.0 - 1.0  ! specific heat ratio of air
   real, parameter :: TSTOP = 0.16, EPS = 0.5, TAUMAX = 10.0
@@ -57,6 +57,10 @@ PROGRAM riemann_solver
   real :: DFD1, DFX1, DFE1, DFD2, DFX2, DFE2, ADE1, AXM1, AEN1, ADE2, AXM2,AEN2
   integer :: solver_number, initail_number
   character(len=20) :: arg1, arg2
+  real :: start_time, end_time, elapsed_time
+
+  call cpu_time(start_time)
+
 
   ! choose solver to use: 1 for 'HLL'; 2 for 'HLLC'; 3 for 'Roe'
   call get_command_argument(1, arg1)
@@ -111,7 +115,7 @@ PROGRAM riemann_solver
   ! give initial condition
   do I = 1, IMAX
     if ( FLOAT(I-2) < IMAX/2.0 ) then
-      if ( initail_number.eq.1 ) then  ! 
+      if ( initail_number.eq.1 ) then  ! shock tube problem
         den=0.445
         vel=0.698
         prs=3.528
@@ -184,7 +188,7 @@ PROGRAM riemann_solver
       exit  ! jump off time loop to output data
     end if
     IT=IT+1
-    WRITE(*,*) IT,TAU,TIME  ! print the time step in terminal
+    ! WRITE(*,*) IT,TAU,TIME  ! print the time step in terminal
 
     ! reconstruction: use second-order MUSCL recon-scheme
     DO I= 2,IMAXM
@@ -260,6 +264,10 @@ PROGRAM riemann_solver
     ENER(IMAX)=ENER(IMAXM2-1) 
 
   end do
+
+  call cpu_time(end_time)
+  elapsed_time = end_time - start_time
+  print *, "Elapsed time (seconds): ", elapsed_time
 
   ! write to file 'riemann.plt'
   if ( solver_number == 1 ) then
